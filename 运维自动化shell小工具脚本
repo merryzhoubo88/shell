@@ -1,0 +1,50 @@
+1.检测cpu剩余百分比
+
+#!/bin/bash
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/wl/bin
+export PATH
+TERM=linux
+export TERM
+CpuResult=$(top -bn 1 | grep "Cpu" | awk '{print $5}' | sed 's/\..*$//g')
+
+if [[ $CpuResult < 20 ]];then
+  echo "CPU WARNING : $CpuResult" > /service/script/.cpu_in.txt
+  top -bn 1 >> /service/script./cpu_in.txt
+  mail -s "Inspcet CPU" wl < /service/script/.cpu_in.txt
+fi
+
+2.检测内存
+#!/bin/bash
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/wl/bin
+export PATH
+MEM=$(free -m | grep "Mem" | awk '{print $4}')
+
+if [[ MEM < 500 ]];then
+  echo -e "Memory Warning : Memory free $MEM" > /service/script/.MemoryWarning
+  mail -s "Memory Warning" wl < /service/script/.MemoryWarning
+fi
+
+3.检测磁盘剩余空间
+#!/bin/bash
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/wl/bin
+export PATH
+for RemainingSpace in $(df -h | awk '{print $5}' | grep -v 'Use' | sed -e 's/[%]//g')
+do
+  if [[ $RemainingSpace > 80 ]];then
+    echo -e "$RemainingSpace"
+    echo -e "$(df -h | grep $RemainingSpace)" > /service/script/.HarddiskWarning
+    mail -s "disk Warning" wl < /service/script/.HarddiskWarning
+  fi
+done
+
+4.检测剩余Inode
+#!/bin/bash
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/wl/bin
+export PATH
+for FreeInode in $(df -i | grep -v "Filesystem" | awk '{print $4}')
+do
+  if [[ $FreeInode < 200 ]];then
+    echo -e "$(df -i | grep "$FreeInode")" > /service/script/.FreeInode
+    mail -s "FreeInode Warning" wl < /service/script/.FreeInode
+  fi
+done
